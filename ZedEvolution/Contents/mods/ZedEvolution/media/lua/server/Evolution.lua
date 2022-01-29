@@ -62,11 +62,16 @@ local function getTime (year, month, day, hour)
   return os.time{ year = year, month = month, day = day, hour = math.floor(hour)}
 end
 
-local function getOptionValue (name)
+--- Get the value for a sandbox option.
+---@param name string 'name of the sandbox option'
+local function getVar (name)
   return getSandboxOptions():getOptionByName(name):getValue()
 end
 
-local function setOptionValue (name, value)
+--- Set the value for a sandbox option.
+---@param name string 'name of the sandbox option'
+---@param value any 'new value'
+local function setVar (name, value)
   return getSandboxOptions():set(name, value)
 end
 
@@ -81,9 +86,9 @@ local function getTimeElapsed (gameTime)
     gameTime:getTimeOfDay())
   local startTime = getTime(
     -- Can't use gameTime:getStart[...] for this because on servers it seems to return the wrong time for the client.
-    getOptionValue('StartYear') + getSandboxOptions():getFirstYear() - 1,
-    getOptionValue('StartMonth') -1,
-    getOptionValue('StartDay') -1,
+    getVar('StartYear') + getSandboxOptions():getFirstYear() - 1,
+    getVar('StartMonth') -1,
+    getVar('StartDay') -1,
     gameTime:getStartTimeOfDay())
   return os.difftime(nowTime, startTime)
 end
@@ -133,8 +138,8 @@ evolutionFunctions = {
 ---@param n number 'base evolution
 ---@return number 'net evolution'
 local function applyEvolutionFunction(n)
-  return evolutionFunctions[getOptionValue('ZedEvolution.Function')](
-    n, getOptionValue('ZedEvolution.Param1'), getOptionValue('ZedEvolution.Param2'), getOptionValue('ZedEvolution.Param3'))
+  return evolutionFunctions[getVar('ZedEvolution.Function')](
+    n, getVar('ZedEvolution.Param1'), getVar('ZedEvolution.Param2'), getVar('ZedEvolution.Param3'))
 end
 
 
@@ -165,7 +170,7 @@ end
 ---@see getPopWeight
 local function createWeightFunctions ()
   for name, handler in pairs(handlers) do
-    weightFunctions[name] = getPopWeight(getOptionValue('ZedEvolution.' .. name .. 'Weight') / 100)
+    weightFunctions[name] = getPopWeight(getVar('ZedEvolution.' .. name .. 'Weight') / 100)
   end
 end
 
@@ -180,7 +185,7 @@ end
 ---@param multiplier number 'the multiplier to use'
 local function handlerSet(handler, multiplier)
   handler.set(
-    evolution * getOptionValue('ZedEvolution.' .. handler.name) * multiplier,
+    evolution * getVar('ZedEvolution.' .. handler.name) * multiplier,
     handler.default, handler.limits, handler.div)
 end
 
@@ -189,8 +194,8 @@ end
 ---@return table 'Min and max values for the attribute'
 local function getLimits(name)
   local values = {
-    getOptionValue('ZedEvolution.' .. name .. 'Min'),
-    getOptionValue('ZedEvolution.' .. name .. 'Limit'),
+    getVar('ZedEvolution.' .. name .. 'Min'),
+    getVar('ZedEvolution.' .. name .. 'Limit'),
   }
   return { min = math.min(unpack(values)), max = math.max(unpack(values)) }
 end
@@ -215,71 +220,70 @@ end
 ---@see handlers
 ---@see createSettingHandler
 local function createHandlers ()
-  --handlers = {
   -- Evolve speed over time only if speed is not randomized.
-  createSettingHandler('Speed', getOptionValue('ZombieLore.Speed'), 3,
+  createSettingHandler('Speed', getVar('ZombieLore.Speed'), 3,
     function (f, d, l, div)
       if d ~= 4 then
-        setOptionValue('ZombieLore.Speed', PZMath.roundToNearest(clamp(d - f / div, l.min, l.max)))
+        setVar('ZombieLore.Speed', PZMath.roundToNearest(clamp(d - f / div, l.min, l.max)))
       end 
     end)
 
   -- Evolve strength over time only if strength is not randomized.
-  createSettingHandler('Strength', getOptionValue('ZombieLore.Strength'), 3,
+  createSettingHandler('Strength', getVar('ZombieLore.Strength'), 3,
     function (f, d, l, div) 
       if d ~= 4 then
-        setOptionValue('ZombieLore.Strength', PZMath.roundToNearest(clamp(d - f / div, l.min, l.max)))
+        setVar('ZombieLore.Strength', PZMath.roundToNearest(clamp(d - f / div, l.min, l.max)))
       end 
     end)
 
   -- Evolve toughness over time only if toughness is not randomized.
-  createSettingHandler('Toughness', getOptionValue('ZombieLore.Toughness'), 3,
+  createSettingHandler('Toughness', getVar('ZombieLore.Toughness'), 3,
     function (f, d, l, div) 
       if d ~= 4 then 
-        setOptionValue('ZombieLore.Toughness', PZMath.roundToNearest(clamp(d - f / div, l.min, l.max)))
+        setVar('ZombieLore.Toughness', PZMath.roundToNearest(clamp(d - f / div, l.min, l.max)))
       end 
     end)
 
   -- Evolve intelligence over time only if intelligence is not randomized.
-  createSettingHandler('Cognition', getOptionValue('ZombieLore.Cognition'), 3,
+  createSettingHandler('Cognition', getVar('ZombieLore.Cognition'), 3,
     function (f, d, l, div) 
       if d ~= 4 then 
-        setOptionValue('ZombieLore.Cognition', PZMath.roundToNearest(clamp(d - f / div, l.min, l.max)))
+        setVar('ZombieLore.Cognition', PZMath.roundToNearest(clamp(d - f / div, l.min, l.max)))
       end
     end)
 
   -- Evolve ability to crawl under cars over time.
-  createSettingHandler('CrawlUnderVehicle', getOptionValue('ZombieLore.CrawlUnderVehicle'), 7,
+  createSettingHandler('CrawlUnderVehicle', getVar('ZombieLore.CrawlUnderVehicle'), 7,
     function (f, d, l, div) 
-      setOptionValue('ZombieLore.CrawlUnderVehicle', PZMath.roundToNearest(clamp(d - f / div, l.min, l.max)))
+      setVar('ZombieLore.CrawlUnderVehicle', PZMath.roundToNearest(clamp(d - f / div, l.min, l.max)))
     end)
 
   -- Evolve memory over time.
-  createSettingHandler('Memory', getOptionValue('ZombieLore.Memory'), 4,
+  createSettingHandler('Memory', getVar('ZombieLore.Memory'), 4,
     function (f, d, l, div) 
-      setOptionValue('ZombieLore.Memory', PZMath.roundToNearest(clamp(d - f / div, l.min, l.max)) )
+      setVar('ZombieLore.Memory', PZMath.roundToNearest(clamp(d - f / div, l.min, l.max)) )
     end)
 
   -- Evolve vision over time.
-  createSettingHandler('Sight', getOptionValue('ZombieLore.Sight'), 3,
+  createSettingHandler('Sight', getVar('ZombieLore.Sight'), 3,
     function (f, d, l, div) 
-      setOptionValue('ZombieLore.Sight', PZMath.roundToNearest(clamp(d - f / div, l.min, l.max)))
+      setVar('ZombieLore.Sight', PZMath.roundToNearest(clamp(d - f / div, l.min, l.max)))
     end)
 
   -- Evolve hearing over time.
-  createSettingHandler('Hearing', getOptionValue('ZombieLore.Hearing'), 3,
+  createSettingHandler('Hearing', getVar('ZombieLore.Hearing'), 3,
     function (f, d, l, div)
-      setOptionValue('ZombieLore.Hearing', PZMath.roundToNearest(clamp(d - f / div, l.min, l.max)))
+      setVar('ZombieLore.Hearing', PZMath.roundToNearest(clamp(d - f / div, l.min, l.max)))
     end)
 
   -- Evolve transmission of zombie attacks over time only if not everyone is infected.
-  createSettingHandler('Transmission', getOptionValue('ZombieLore.Transmission'), 3,
+  createSettingHandler('Transmission', getVar('ZombieLore.Transmission'), 3,
     function (f, d, l, div) 
       if d ~= 3 then
         d = (d == 4) and 3 or d
         local temp = PZMath.roundToNearest(PZMath.clamp(d - f / div, l.min, l.max))
         temp = (temp == 3) and 4 or temp
-        setOptionValue('ZombieLore.Transmission', temp)
+        setVar('ZombieLore.Transmission', temp)
       end 
     end)
   --}
@@ -295,8 +299,8 @@ end
 --- @see evolution
 local function updateEvolution ()
   evolution = applyEvolutionFunction(
-    math.max(0, getTimeElapsed(gameTime) / 86400 - getOptionValue('ZedEvolution.Delay')) + 
-    getOptionValue('ZedEvolution.StartSlow'))
+    math.max(0, getTimeElapsed(gameTime) / 86400 - getVar('ZedEvolution.Delay')) + 
+    getVar('ZedEvolution.StartSlow'))
   print(modID, 'Evolution factor is now:', evolution)
 end
 
@@ -316,8 +320,10 @@ local function changeZombieStats (zombie)
   if modData[modID].interval > 0 then
     modData[modID].interval = modData[modID].interval - 1
   else
-    modData[modID].interval = 500
+    -- Only update if the current process owns this zombie.
     if (not isClient() and not isServer()) or (isClient() and not zombie:isRemoteZombie()) then
+      modData[modID].interval = 500
+
       handlerSet(handlers.Speed, modData[modID].Speed)
       handlerSet(handlers.Strength, modData[modID].Strength)
       handlerSet(handlers.Toughness, modData[modID].Toughness)
@@ -339,19 +345,13 @@ local function changeZombieStats (zombie)
   end
 end
 
---Events.OnClientCommand.Add(function (module, command, player, args)
---  if module == modID and command == 'UpdateZombie' then
---    changeServerZombieStats(args)
---  end
---end)
-
 --- Enable the mod in this world only if evolution is enabled.
 Events.OnGameTimeLoaded.Add(function ()
   -- Remove leftover handlers.
   Events.EveryHours.Remove(updateEvolution)
   Events.OnZombieUpdate.Remove(changeZombieStats)
 
-  if getOptionValue('ZedEvolution.DoEvolve') then
+  if getVar('ZedEvolution.DoEvolve') then
     -- Init mod data and handlers.
     local modData = getGameTime():getModData()
     createHandlers()
