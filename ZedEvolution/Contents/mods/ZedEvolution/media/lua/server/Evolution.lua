@@ -298,6 +298,7 @@ end
 --- Calculate the evolution factor
 --- @see evolution
 local function updateEvolution ()
+  local gameTime = getGameTime()
   evolution = applyEvolutionFunction(
     math.max(0, getTimeElapsed(gameTime) / 86400 - getVar('ZedEvolution.Delay')) + 
     getVar('ZedEvolution.StartSlow'))
